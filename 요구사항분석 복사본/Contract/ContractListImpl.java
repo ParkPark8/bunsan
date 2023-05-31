@@ -28,8 +28,13 @@ public class ContractListImpl implements ContractList {
 		}
 		return null;
 	}
-
-
+	@Override
+	public Contract searchIsContract(String insuranceID , String customerID) {
+		for(Contract contract : this.ContractList) {
+			if(contract.getInsuranceID().equals(insuranceID) && contract.getCustomerID().equals(customerID)) return contract;
+		}return null;
+	}
+	
 	@Override
 	public boolean delete() {
 		// TODO Auto-generated method stub

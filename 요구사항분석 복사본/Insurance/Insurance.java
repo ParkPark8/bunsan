@@ -72,6 +72,4 @@ public class Insurance{
 	//Result
 	public Result getResult() {return this.m_result;}
 	public void setResult(Result result) {this.m_result = result;}
-	
-	
 }

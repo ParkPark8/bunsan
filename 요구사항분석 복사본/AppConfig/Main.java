@@ -16,6 +16,7 @@ import javax.swing.text.DefaultEditorKit.CutAction;
 
 import com.mysql.cj.x.protobuf.MysqlxDatatypes.Array;
 import com.mysql.cj.xdevapi.DbDoc;
+import com.mysql.cj.xdevapi.SqlUpdateResult;
 
 import Contract.Contract;
 import Contract.ContractList;
@@ -251,7 +252,7 @@ public class Main {
 			}
 		}
 	}
-	private void insuranceExam(Employee employee) {
+	private void insuranceExam(Employee employee) { // UW - 인수 심사하다 
 		/* 보험의 Result / 직원의 numSelled / Mail ... 
 		 * 인수 & 반려 후 변경 사항
 		 * - 인수 시 -
@@ -293,18 +294,21 @@ public class Main {
 		System.out.println("면담 내용: " + interview.getContent());
 		System.out.println(dd.DD);
 		int uwNum = calculateFactors(customer,insurance);
+		//Time
 		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 		Date time = new Date();
+		//
+		String startDate = contract.getStartDate();
+		
 		if(uwNum < 5) {
 			System.out.println("인수 심사 결과 계약을 체결할 수 있는 고객입니다 . ");
 			System.out.println("계약 체결을 진행하시려면 (1) , 대기를 원하시면 (2) 를 눌러주세요 . ");
 			if(Integer.parseInt(sc.nextLine())==2)  return;
 			else {
 				// 납입일 , 만기일 설정 ; Contract DB Update 
-				contractDao.update("startDate",format.format(time)+"", contract); // startDate
-				String endDate = setEndDate(format.format(time));
+				String endDate = setEndDate(startDate);
 				contractDao.update("endDate", endDate+"", contract); //endDate
-				String payDate = setPayDate(format.format(time));
+				String payDate = setPayDate(startDate);
 				contractDao.update("payDate", payDate+"", contract);//payDate
 				contractDao.update("processNum", "3", contract);//processNum
 				// Insurance result , employee NumSelled Update. 
@@ -372,6 +376,7 @@ public class Main {
 		return payDate;
 	}
 	private int calculateFactors(Customer customer, Insurance insurance) {
+		System.out.println("인수 심사를 시작합니다 ...\n");
 		int age = Integer.parseInt(customer.getAge());
 		String job = customer.getJob();
 		Car car = carDao.retrieve(customer);
@@ -391,18 +396,21 @@ public class Main {
 			break;
 		default:break;
 		}
-		
+		System.out.println("계약자 직업 : "+job+" ( uwRate : " + uwNum +" / 5 )\n");
 		if(Integer.parseInt(madeYear)<2018) { // 제조년도 별 요소
 			uwNum+=1;
 			}
+		System.out.println("차량 제조 년도 : "+madeYear+" ( uwRate : " + uwNum +" / 5 )\n");
 		//차종 별 요소
-		if(carType.equals("motorCycle") || carType.equals("freight")) uwNum +=1; 
+		if(carType.equals("motorCycle") || carType.equals("freight")) uwNum +=1;
+		System.out.println("계약자 소유 차종 : "+carType+" ( uwRate : " + uwNum +" / 5 )\n");
 		//나이 별 요소
 		if(age<30 || age > 60 ) {
 			if(age>70) uwNum +=2;
 			else uwNum+=1;
 		}
-			
+		System.out.println("계약자 나이 : "+age+" ( uwRate : " + uwNum +" / 5 )\n");
+		System.out.println(dd.DD);
 		return uwNum;
 	}
 	private void contractInsurance(Employee employee) {
@@ -548,6 +556,8 @@ public class Main {
 				askInterview(customer);
 				break;
 			case 3:
+				System.out.println(dd.DD);
+				checkRegistedInsuranceList(customer);
 				break;
 			case 4:
 				break;
@@ -562,6 +572,32 @@ public class Main {
 			
 		}
 	}
+	private void checkRegistedInsuranceList(Customer customer) {
+		ArrayList<Contract> contracts = contractDao.retrieveByCustomerID(customer).getContractList();
+		ArrayList<Contract> contractList = new ArrayList<>();
+		int cnt = 1;
+		for(Contract contract : contracts) {
+			Insurance insurance = insuranceList.search(Integer.parseInt(contract.getInsuranceID()));
+			System.out.println(cnt + ". "+insurance.getInsuranceName()); cnt++;
+			contractList.add(contract);
+		}System.out.println("확인하실 보험을 선택해주세요 . ");
+		int selectNum = Integer.parseInt(sc.nextLine());
+		while(selectNum > contractList.size()) { // Exception : 없는 번호를 선택시 
+			System.out.println("다시 선택해 주세요 .");
+			selectNum = Integer.parseInt(sc.nextLine());
+		}
+		System.out.println(dd.DD);
+		Contract contract = contractList.get(selectNum-1);
+		Insurance insurance = insuranceList.search(Integer.parseInt(contract.getInsuranceID()));
+		System.out.println("< "+ insurance.getInsuranceName()+" >");
+		System.out.println("보험 가입일 : " + contract.getStartDate());
+		System.out.println("보험 만료일 : " + contract.getEndDate());
+		System.out.println("보험료 납부일 : "+contract.getPayDate() );
+		System.out.println("보험 보장금 ( 저 ) : " +insurance.getLCoverage().getCoverageCost());
+		System.out.println("보험 보장금 ( 중 ) : "+insurance.getMCoverage().getCoverageCost());
+		System.out.println("보험 보장금 ( 고 ) : " +insurance.getHCoverage().getCoverageCost());
+
+	}
 	private void checkMailBox(Customer customer) {
 		ArrayList<Mail> mails = mailDao.retrieveByCustomerID(customer.getCustomerID()).getMailList();
 		int cnt = 1;
@@ -573,12 +609,13 @@ public class Main {
 		}
 		System.out.println("확인하실 메일을 선택해주세요 . ");
 		int selectNum = Integer.parseInt(sc.nextLine());
-		while(selectNum>mails.size()){
+		while(selectNum>mails.size()){ //Exception : 없는 번호 선택 시 
 			System.out.println("다시 선택해 주세요 . ");
 			selectNum = Integer.parseInt(sc.nextLine());
 		}
 		System.out.println(dd.DD);
 		Mail mail = mailList.get(selectNum-1);
+		System.out.println("발신자 : "+mail.getEmployeeID().split("_")[1]);
 		System.out.println(mail.getContent());
 		
 	}
@@ -597,9 +634,15 @@ public class Main {
 		int selecNum = Integer.parseInt(sc.nextLine());
 		if(selecNum == 0 ) return;
 		Insurance insurance = insuranceList.search(selecNum);
+		//Exception : 존재하지 않는 보험 ID를 입력하였을 때 
 		while(insurance == null) {
 			System.out.println("존재하지 않는 보험 ID를 입력하셨습니다  . 다시 입력해 주세요 . ");
 			insurance = insuranceList.search(Integer.parseInt(sc.nextLine()));
+		}
+		//Exception : 이미 체결된 보험을 가입하려 할 때 
+		while(contractList.searchIsContract(insurance.getInsuranceID()+"", customer.getCustomerID()) != null) {
+			System.out.println("해당 보험은 이미 체결 되었거나 진행 중인 보험입니다 . ");
+			return;
 		}
 
 		System.out.println(dd.DD); 
@@ -629,21 +672,28 @@ public class Main {
 				System.out.println("시산작업 진행중 . . .");
 				System.out.println();
 				float rate = Float.parseFloat(getRate(insurance, customer)) ;
-				float monthRate = (float)0.0015 * rate * (insurance.getHCoverage().getCoverageCost()) ;// 월납부 보험
+				float monthRate = (float)0.0020 * rate * (insurance.getHCoverage().getCoverageCost()) ;// 월납부 보험
 				float registFee = insurance.getInsuranceFee() * rate ; // 보험 가입비 
-				System.out.println("고객님의 보험 가입료는 ( "+registFee+" ) , 월 납부액은 ( "+monthRate+" )입니다. ");
+				String dbMonthRate = (int)monthRate+"";
+				String dbRegistFee = (int)registFee+"";
+				
+				System.out.println("고객님의 보험 가입료는 ( "+dbRegistFee+" ) , 월 납부액은 ( "+dbMonthRate+" )입니다. ");
 				System.out.println("보험 실현은 직원의 보험 체결 이후 진행됩니다 . 감사합니다 .");
 				//ContractDao 만들기  고객의 isBank -> 1로 update 해주기 
 				Contract contract = new Contract();
 				contract.setCustomerID(customer.getCustomerID());
 				contract.setProcessNum("1");
 				contract.setInsuranceID(insurance.getInsuranceID()+"");
-				contract.setRegistFee(registFee+"");
-				contract.setMonthFee(monthRate+"");
+				contract.setRegistFee(dbRegistFee);
+				contract.setMonthFee(dbMonthRate);
+				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+				Date time = new Date();
+				String date = format.format(time);
+				contract.setStartDate(date);
 				contractDao.create(contract);
 				customerDao.update("isBank", "1", customer);
 				////////////////////////////////////////////////////////////////////////
-			}else {
+			}else { //Exception : 면담 진행 X 고객일 시 
 				System.out.println("! 직원과의 면담이 진행중이거나 처리되지 않은 상태입니다 . 면담 후 다시 신청해주세요 !");
 			}
 			break;

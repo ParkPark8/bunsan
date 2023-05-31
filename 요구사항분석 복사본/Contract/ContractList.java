@@ -13,4 +13,5 @@ public interface ContractList {
 	public Contract search(int contracrID);
 	public void update();
 	public ArrayList<Contract> getContractList();
+	Contract searchIsContract(String insuranceID, String customerID);
 }
