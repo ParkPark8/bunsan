@@ -42,4 +42,9 @@ public class EmployeeListImpl implements EmployeeList {
 		
 	}
 
+	@Override
+	public ArrayList<Employee> getEmployeeList() {
+		return this.employeeList;
+	}
+
 }

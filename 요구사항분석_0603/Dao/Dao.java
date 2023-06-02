@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
 
 public class Dao {
 
@@ -56,6 +57,18 @@ public class Dao {
 			e.printStackTrace();
 			throw e;
 		}
+	}
+	public void updateDate(String query) throws Exception{
+		
+		PreparedStatement stmt = null;
+		try {
+			stmt = connect.prepareStatement(query);
+			stmt.executeUpdate();
+		}catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}
+	
 	}
 
 }

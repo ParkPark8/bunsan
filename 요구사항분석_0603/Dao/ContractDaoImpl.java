@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import Contract.Contract;
 import Contract.ContractList;
 import Contract.ContractListImpl;
+import Customer.Customer;
 
 public class ContractDaoImpl extends Dao implements ContractDao{
 	public ContractDaoImpl() {
@@ -103,6 +104,42 @@ public class ContractDaoImpl extends Dao implements ContractDao{
 		}catch (Exception e) {
 			e.printStackTrace();
 		}return null;
+	}
+	@Override
+	public ContractList retrieveByCustomerID(Customer customer) { 
+		String query = "select * from Contract WHERE customerID = '"+ customer.getCustomerID()+"'";
+		ContractList contractList = new ContractListImpl();
+		try {
+			ResultSet resultSet = this.retrieve(query);
+			while(resultSet.next()) {
+				Contract contract = new Contract();
+				contract.setContractID(resultSet.getInt("contractID"));
+				contract.setCustomerID(resultSet.getString("customerID"));
+				contract.setEmployeeID(resultSet.getString("employeeID"));
+				contract.setInsuranceID(resultSet.getString("insuranceID"));
+				contract.setStartDate(resultSet.getString("startDate"));
+				contract.setEndDate(resultSet.getString("endDate"));
+				contract.setPayDate(resultSet.getString("payDate"));
+				contract.setRegistFee(resultSet.getString("registFee"));
+				contract.setMonthFee(resultSet.getString("monthFee"));
+				contract.setProcessNum(resultSet.getString("processNum"));
+				contractList.add(contract);
+			}
+			return contractList;
+		}catch (Exception e) {
+			e.printStackTrace();
+		}return null;
+	}
+	@Override
+	public void delete(Contract contract) {
+		//DELETE FROM `new_schema`.`Contract` WHERE (`contractID` = '16');
+		String contractID = contract.getContractID()+"";
+		String query = "DELETE FROM Contract WHERE contractID = '"+contractID+"'"; 
+		try {
+			this.update(query);
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 }

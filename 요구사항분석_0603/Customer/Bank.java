@@ -1,8 +1,14 @@
 package Customer;
 
 public class Bank {
-	private String customerID  , accountNum , bankCompany , moneyAmount ,name;
+	private String customerID  , accountNum , bankCompany , moneyAmount ,name ,passWord;
 
+	public String getPassword() {
+		return this.passWord;
+	}
+	public void setPassWord(String passWord) {
+		this.passWord = passWord;
+	}
 	public String getCustomerID() {
 		return customerID;
 	}
